@@ -5,33 +5,41 @@ const express = require('express');
 const axios = require('axios');
 const { JSDOM } = require('jsdom');
 const { Readability } = require('@mozilla/readability');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+app.use(express.static(path.join(__dirname, '../public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../index.html'));
+});
+
 async function resumirTextoConHuggingFace(texto) {
   const HUGGINGFACE_API_TOKEN = process.env.HUGGINGFACE_API_TOKEN;
 
-  const response = await axios.post(
-    'https://api-inference.huggingface.co/models/facebook/bart-large-cnn',
-    { inputs: texto },
-    {
-      headers: {
-        Authorization: `Bearer ${HUGGINGFACE_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
-    }
-  );
+  try {
+    const response = await axios.post(
+      'https://api-inference.huggingface.co/models/facebook/bart-large-cnn',
+      { inputs: texto },
+      {
+        headers: {
+          Authorization: `Bearer ${HUGGINGFACE_API_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    );
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    console.error('Error al llamar a Hugging Face:', error.response?.data || error.message);
+    throw error;
+  }
 }
-
-app.get('/', (req, res) => {
-  res.send('📰 API de resumen de noticias funcionando');
-});
 
 app.post('/resumir', async (req, res) => {
   const { url } = req.body;
@@ -43,6 +51,7 @@ app.post('/resumir', async (req, res) => {
   try {
     const response = await axios.get(url);
     const html = response.data;
+
     const dom = new JSDOM(html, { url });
     const reader = new Readability(dom.window.document);
     const article = reader.parse();
@@ -59,7 +68,10 @@ app.post('/resumir', async (req, res) => {
       resumen: resumen[0]?.summary_text || 'No se pudo generar resumen',
     });
   } catch (error) {
-    res.status(500).json({ error: 'Error al procesar la página', detalle: error.message });
+    res.status(500).json({
+      error: 'Error al procesar la página o generar el resumen',
+      detalle: error.message,
+    });
   }
 });
 
