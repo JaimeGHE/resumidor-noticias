@@ -12,8 +12,8 @@
 </head>
 <body class="bg-light">
   <div class="container py-5">
-    <h1 class="text-center mb-4">📰 Resumidor de Noticias</h1>
-
+    <h1 class="text-center mb-4">Resumidor de Noticias</h1>
+    <h4 class="text-center mb-4">Pega el link de una noticia y obtén un pequeño resumen generado por inteligencia artificial.</h2>
     <div class="mb-3">
       <input
         type="text"
@@ -38,38 +38,6 @@
       Ocurrió un error al resumir la noticia.
     </div>
   </div>
-
-  <script>
-    async function resumir() {
-      const url = document.getElementById('urlInput').value;
-      const resumenEl = document.getElementById('resumen');
-      const tituloEl = document.getElementById('titulo');
-      const card = document.getElementById('resultado');
-      const error = document.getElementById('error');
-
-      resumenEl.textContent = 'Generando resumen...';
-      tituloEl.textContent = '';
-      card.classList.remove('d-none');
-      error.classList.add('d-none');
-
-      try {
-        const res = await fetch('/resumir', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        });
-
-        if (!res.ok) throw new Error();
-
-        const data = await res.json();
-        tituloEl.textContent = data.titulo;
-        resumenEl.textContent = data.resumen;
-      } catch (err) {
-        card.classList.add('d-none');
-        error.classList.remove('d-none');
-        console.error(err);
-      }
-    }
-  </script>
+  <script src="/script.js"></script>
 </body>
 </html>
